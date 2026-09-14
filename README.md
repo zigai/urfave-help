@@ -24,7 +24,7 @@ Running the example below outputs:
 Manage background tasks and worker deployments
 
 Usage:
-  taskctl [command] <environment> [replicas] [flags]
+  taskctl [command] [flags] <environment> [replicas]
 
 Arguments:
   <environment>           Target environment (staging, production)
