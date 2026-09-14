@@ -4,18 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"unicode"
 )
-
-// capitalizeFirst returns s with its first rune capitalized.
-func capitalizeFirst(s string) string {
-	if s == "" {
-		return ""
-	}
-	r := []rune(s)
-	r[0] = unicode.ToUpper(r[0])
-	return string(r)
-}
 
 // wrapWords reflows text at word boundaries to fit width.
 func wrapWords(text string, width int) []string {
@@ -52,7 +41,6 @@ func wrapWords(text string, width int) []string {
 
 // printPaddedEntry writes an aligned label and description with hanging indents for continuation lines.
 func printPaddedEntry(w io.Writer, label string, desc string, gutter int, maxWidth int, prefixGap int, minDescWidth int) {
-	desc = capitalizeFirst(desc)
 	if desc == "" {
 		_, _ = fmt.Fprintf(w, "  %s\n", label)
 		return
@@ -67,6 +55,32 @@ func printPaddedEntry(w io.Writer, label string, desc string, gutter int, maxWid
 	}
 
 	_, _ = fmt.Fprintf(w, "  %-*s  %s\n", gutter, label, lines[0])
+
+	hangingIndent := strings.Repeat(" ", gutter+prefixGap)
+	for _, line := range lines[1:] {
+		_, _ = fmt.Fprintf(w, "%s%s\n", hangingIndent, line)
+	}
+}
+
+// printPaddedEntryIndent writes an aligned label and description with custom indentation.
+func printPaddedEntryIndent(w io.Writer, label string, desc string, gutter int, maxWidth int, indentSpaces int, gutterGap int, minDescWidth int) {
+	indentStr := strings.Repeat(" ", indentSpaces)
+	if desc == "" {
+		_, _ = fmt.Fprintf(w, "%s%s\n", indentStr, label)
+		return
+	}
+
+	prefixGap := indentSpaces + gutterGap
+	avail := max(minDescWidth, maxWidth-(gutter+prefixGap))
+
+	lines := wrapWords(desc, avail)
+	if len(lines) == 0 {
+		_, _ = fmt.Fprintf(w, "%s%s\n", indentStr, label)
+		return
+	}
+
+	gapStr := strings.Repeat(" ", gutterGap)
+	_, _ = fmt.Fprintf(w, "%s%-*s%s%s\n", indentStr, gutter, label, gapStr, lines[0])
 
 	hangingIndent := strings.Repeat(" ", gutter+prefixGap)
 	for _, line := range lines[1:] {
