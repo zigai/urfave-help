@@ -39,8 +39,12 @@ fix:
 lint:
     golangci-lint run
 
+# Run tests with the race detector
+race:
+    go test -race ./...
+
 # Run all non-mutating quality checks
-check: mod-check test lint
+check: mod-check race lint
     golangci-lint fmt --diff
 
 # Build the binary
