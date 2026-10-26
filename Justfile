@@ -47,26 +47,21 @@ race:
 check: mod-check race lint
     golangci-lint fmt --diff
 
-# Build the binary
+# Build the binary with version info
 build:
-    go build -o urfave-help .
-
-# Install the binary
-install:
-    go install .
-
-# Remove build artifacts
-clean:
-    rm -rf urfave-help urfave-help.exe dist/
-
-# Build with version info (local dev)
-build-dev:
     #!/usr/bin/env sh
     set -e
     commit=$(git rev-parse --short HEAD 2>/dev/null || echo none)
     build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     go build -ldflags "-X github.com/zigai/urfave-help/internal/cli.version=dev -X github.com/zigai/urfave-help/internal/cli.commit=${commit} -X github.com/zigai/urfave-help/internal/cli.date=${build_date}" -o urfave-help .
 
+# Install the binary
+install:
+    GOBIN="$HOME/.local/bin" go install -trimpath -ldflags='-s -w' .
+
+# Remove build artifacts
+clean:
+    rm -rf urfave-help urfave-help.exe dist/
 
 alias cov := coverage
 alias fmt := format
