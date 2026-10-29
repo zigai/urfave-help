@@ -237,3 +237,7 @@ linters:
 
       - path: ".*_test\\.go"
         linters: [decorder, funcorder, exhaustruct_v5, cyclop, gocognit]
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
