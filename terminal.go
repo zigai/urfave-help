@@ -12,9 +12,11 @@ func TerminalWidth(w any) int {
 	if !ok || f == nil {
 		return 0
 	}
+
 	width, _, err := term.GetSize(int(f.Fd()))
 	if err != nil || width <= 0 {
 		return 0
 	}
+
 	return width
 }

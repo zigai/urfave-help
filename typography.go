@@ -11,19 +11,23 @@ func wrapWords(text string, width int) []string {
 	if width <= 0 {
 		return []string{text}
 	}
+
 	words := strings.Fields(text)
 	if len(words) == 0 {
 		return nil
 	}
 
-	var lines []string
-	var current strings.Builder
+	var (
+		lines   []string
+		current strings.Builder
+	)
 
 	for _, word := range words {
 		if current.Len() == 0 {
 			current.WriteString(word)
 			continue
 		}
+
 		if current.Len()+1+len(word) > width {
 			lines = append(lines, current.String())
 			current.Reset()
@@ -33,14 +37,24 @@ func wrapWords(text string, width int) []string {
 			current.WriteString(word)
 		}
 	}
+
 	if current.Len() > 0 {
 		lines = append(lines, current.String())
 	}
+
 	return lines
 }
 
 // printPaddedEntry writes an aligned label and description with hanging indents for continuation lines.
-func printPaddedEntry(w io.Writer, label string, desc string, gutter int, maxWidth int, prefixGap int, minDescWidth int) {
+func printPaddedEntry(
+	w io.Writer,
+	label string,
+	desc string,
+	gutter int,
+	maxWidth int,
+	prefixGap int,
+	minDescWidth int,
+) {
 	if desc == "" {
 		_, _ = fmt.Fprintf(w, "  %s\n", label)
 		return
@@ -63,7 +77,16 @@ func printPaddedEntry(w io.Writer, label string, desc string, gutter int, maxWid
 }
 
 // printPaddedEntryIndent writes an aligned label and description with custom indentation.
-func printPaddedEntryIndent(w io.Writer, label string, desc string, gutter int, maxWidth int, indentSpaces int, gutterGap int, minDescWidth int) {
+func printPaddedEntryIndent(
+	w io.Writer,
+	label string,
+	desc string,
+	gutter int,
+	maxWidth int,
+	indentSpaces int,
+	gutterGap int,
+	minDescWidth int,
+) {
 	indentStr := strings.Repeat(" ", indentSpaces)
 	if desc == "" {
 		_, _ = fmt.Fprintf(w, "%s%s\n", indentStr, label)

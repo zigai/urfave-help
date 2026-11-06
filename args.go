@@ -21,6 +21,7 @@ func SetArgs(cmd *cli.Command, args ...Arg) {
 	if cmd == nil {
 		return
 	}
+
 	if cmd.Metadata == nil {
 		cmd.Metadata = make(map[string]any)
 	}

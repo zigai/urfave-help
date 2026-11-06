@@ -20,6 +20,7 @@ func unquoteUsage(usage string) (string, string) {
 				if usage[j] == '`' {
 					name := usage[i+1 : j]
 					clean := usage[:i] + name + usage[j+1:]
+
 					return name, clean
 				}
 			}
@@ -27,6 +28,7 @@ func unquoteUsage(usage string) (string, string) {
 			break
 		}
 	}
+
 	return "", usage
 }
 
@@ -39,6 +41,7 @@ func flagMetavar(fl cli.Flag, rawUsage string, customResolver func(cli.Flag) str
 			if !strings.HasPrefix(custom, "<") {
 				return "<" + custom + ">"
 			}
+
 			return custom
 		}
 	}
@@ -61,7 +64,11 @@ func flagMetavar(fl cli.Flag, rawUsage string, customResolver func(cli.Flag) str
 		return "<float>"
 	case *cli.StringSliceFlag:
 		return "<string...>"
-	case *cli.IntSliceFlag, *cli.Int8SliceFlag, *cli.Int16SliceFlag, *cli.Int32SliceFlag, *cli.Int64SliceFlag:
+	case *cli.IntSliceFlag,
+		*cli.Int8SliceFlag,
+		*cli.Int16SliceFlag,
+		*cli.Int32SliceFlag,
+		*cli.Int64SliceFlag:
 		return "<int...>"
 	case *cli.UintSliceFlag, *cli.Uint16SliceFlag, *cli.Uint32SliceFlag, *cli.Uint64SliceFlag:
 		return "<uint...>"
@@ -79,13 +86,21 @@ func flagMetavar(fl cli.Flag, rawUsage string, customResolver func(cli.Flag) str
 }
 
 // formatFlagItem formats a flag into its label and description.
-func formatFlagItem(fl cli.Flag, pathPrefixFilter string, customMetavar func(cli.Flag) string) flagItem {
+func formatFlagItem(
+	fl cli.Flag,
+	pathPrefixFilter string,
+	customMetavar func(cli.Flag) string,
+) flagItem {
 	names := fl.Names()
+
 	var longNames, shortNames []string
+
 	isInverse := false
 	invPrefix := ""
+
 	if bif, ok := fl.(*cli.BoolWithInverseFlag); ok {
 		isInverse = true
+
 		invPrefix = bif.InversePrefix
 		if invPrefix == "" {
 			invPrefix = cli.DefaultInverseBoolPrefix
@@ -117,10 +132,12 @@ func formatFlagItem(fl cli.Flag, pathPrefixFilter string, customMetavar func(cli
 
 	var labelBuilder strings.Builder
 	labelBuilder.WriteString(strings.Join(allNames, ", "))
+
 	if metavar != "" {
 		if labelBuilder.Len() > 0 {
 			labelBuilder.WriteString(" ")
 		}
+
 		labelBuilder.WriteString(metavar)
 	}
 
@@ -166,19 +183,23 @@ func flagDefaultText(df cli.DocGenerationFlag, pathPrefixFilter string) string {
 	if !df.IsDefaultVisible() {
 		return ""
 	}
+
 	if s := df.GetDefaultText(); s != "" {
 		return fmt.Sprintf(" (default: %s)", s)
 	}
+
 	if !df.TakesValue() {
 		return ""
 	}
+
 	val := df.GetValue()
 	if val == "" {
 		return ""
 	}
 
 	// Safely strip outer quotes only if it is a single simple quoted literal without internal quotes
-	if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' && !strings.Contains(val[1:len(val)-1], `"`) {
+	if len(val) >= 2 && val[0] == '"' && val[len(val)-1] == '"' &&
+		!strings.Contains(val[1:len(val)-1], `"`) {
 		val = val[1 : len(val)-1]
 	}
 
@@ -188,8 +209,10 @@ func flagDefaultText(df cli.DocGenerationFlag, pathPrefixFilter string) string {
 
 	// Suppress absolute path defaults matching pathPrefixFilter (e.g. "/home/..."),
 	// but do NOT suppress single-character delimiters like "/" or relative paths.
-	if pathPrefixFilter != "" && len(val) > len(pathPrefixFilter) && strings.HasPrefix(val, pathPrefixFilter) {
-		if strings.Contains(val[len(pathPrefixFilter):], "/") || strings.Contains(val[len(pathPrefixFilter):], "\\") {
+	if pathPrefixFilter != "" && len(val) > len(pathPrefixFilter) &&
+		strings.HasPrefix(val, pathPrefixFilter) {
+		if strings.Contains(val[len(pathPrefixFilter):], "/") ||
+			strings.Contains(val[len(pathPrefixFilter):], "\\") {
 			return ""
 		}
 	}

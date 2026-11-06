@@ -66,14 +66,16 @@ func DefaultOptions() Options {
 }
 
 // WithWidths sets the minimum, maximum, and non-TTY fallback widths for word wrapping.
-func WithWidths(minWidth, maxWidth, defaultWidth int) Option {
+func WithWidths(minWidth int, maxWidth int, defaultWidth int) Option {
 	return func(o *Options) {
 		if minWidth > 0 {
 			o.MinWidth = minWidth
 		}
+
 		if maxWidth > 0 {
 			o.MaxWidth = maxWidth
 		}
+
 		if defaultWidth > 0 {
 			o.DefaultWidth = defaultWidth
 		}
@@ -151,6 +153,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 	if usage == "A new cli application" {
 		usage = ""
 	}
+
 	desc := cmd.Description
 	if usage != "" {
 		if strings.Contains(usage, "\n") {
@@ -160,7 +163,9 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 				_, _ = fmt.Fprintln(w, line)
 			}
 		}
+
 		_, _ = fmt.Fprintln(w)
+
 		if desc != "" && desc != usage {
 			if strings.Contains(desc, "\n") {
 				_, _ = fmt.Fprintln(w, desc)
@@ -169,6 +174,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 					_, _ = fmt.Fprintln(w, line)
 				}
 			}
+
 			_, _ = fmt.Fprintln(w)
 		}
 	} else if desc != "" {
@@ -179,11 +185,13 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 				_, _ = fmt.Fprintln(w, line)
 			}
 		}
+
 		_, _ = fmt.Fprintln(w)
 	}
 
 	// 2. Usage syntax line
 	_, _ = fmt.Fprintln(w, "Usage:")
+
 	if cmd.UsageText != "" {
 		for l := range strings.SplitSeq(cmd.UsageText, "\n") {
 			if strings.HasPrefix(l, " ") || strings.HasPrefix(l, "\t") {
@@ -192,9 +200,11 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 				_, _ = fmt.Fprintln(w, strings.Repeat(" ", opts.IndentSpaces)+l)
 			}
 		}
+
 		_, _ = fmt.Fprintln(w)
 	} else {
 		usageLine := strings.Repeat(" ", opts.IndentSpaces) + cmd.FullName()
+
 		commands := cmd.VisibleCommands()
 		if len(commands) > 0 {
 			usageLine += " [command]"
@@ -220,37 +230,52 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 
 	// Collect persistent flag names to avoid duplicates in subcommands
 	persistentNames := make(map[string]bool)
+
 	for _, pfl := range cmd.VisiblePersistentFlags() {
 		for _, name := range pfl.Names() {
 			persistentNames[name] = true
 		}
 	}
 
-	var localFlags []flagItem
-	var globalFlags []flagItem
+	var (
+		localFlags  []flagItem
+		globalFlags []flagItem
+	)
 
 	if isRoot {
 		for _, fl := range cmd.VisibleFlags() {
-			localFlags = append(localFlags, formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar))
+			localFlags = append(
+				localFlags,
+				formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar),
+			)
 		}
 	} else {
 		for _, fl := range cmd.VisibleFlags() {
 			names := fl.Names()
 			isPersistent := false
+
 			for _, n := range names {
 				if persistentNames[n] {
 					isPersistent = true
 					break
 				}
 			}
+
 			if isPersistent {
 				continue
 			}
-			localFlags = append(localFlags, formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar))
+
+			localFlags = append(
+				localFlags,
+				formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar),
+			)
 		}
 
 		for _, fl := range cmd.VisiblePersistentFlags() {
-			globalFlags = append(globalFlags, formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar))
+			globalFlags = append(
+				globalFlags,
+				formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar),
+			)
 		}
 	}
 
@@ -274,6 +299,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 		for _, a := range args {
 			printPaddedEntry(w, a.Name, a.Desc, gutter, maxWidth, prefixGap, opts.MinDescWidth)
 		}
+
 		_, _ = fmt.Fprintln(w)
 	}
 
@@ -282,6 +308,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 	if len(commands) > 0 {
 		_, _ = fmt.Fprintln(w, "Commands:")
 		cmdGutter := 0
+
 		for _, c := range commands {
 			names := strings.Join(c.Names(), ", ")
 			cmdGutter = max(cmdGutter, len(names))
@@ -289,8 +316,11 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 
 		// Group visible commands by category safely without relying on uninitialized internal state
 		categories := make(map[string][]*cli.Command)
-		var catOrder []string
-		var uncategorized []*cli.Command
+
+		var (
+			catOrder      []string
+			uncategorized []*cli.Command
+		)
 
 		for _, c := range commands {
 			cat := strings.TrimSpace(c.Category)
@@ -300,6 +330,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 				if _, exists := categories[cat]; !exists {
 					catOrder = append(catOrder, cat)
 				}
+
 				categories[cat] = append(categories[cat], c)
 			}
 		}
@@ -308,7 +339,15 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 			// Uncategorized commands first
 			for _, c := range uncategorized {
 				names := strings.Join(c.Names(), ", ")
-				printPaddedEntry(w, names, c.Usage, cmdGutter, maxWidth, prefixGap, opts.MinDescWidth)
+				printPaddedEntry(
+					w,
+					names,
+					c.Usage,
+					cmdGutter,
+					maxWidth,
+					prefixGap,
+					opts.MinDescWidth,
+				)
 			}
 
 			// Then each named category
@@ -317,20 +356,40 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 				if len(catCmds) == 0 {
 					continue
 				}
+
 				if len(uncategorized) > 0 || catName != catOrder[0] {
 					_, _ = fmt.Fprintln(w)
 				}
+
 				_, _ = fmt.Fprintf(w, "%s%s:\n", strings.Repeat(" ", opts.IndentSpaces), catName)
 				subIndent := opts.IndentSpaces + opts.IndentSpaces
+
 				for _, c := range catCmds {
 					names := strings.Join(c.Names(), ", ")
-					printPaddedEntryIndent(w, names, c.Usage, cmdGutter, maxWidth, subIndent, opts.GutterGap, opts.MinDescWidth)
+					printPaddedEntryIndent(
+						w,
+						names,
+						c.Usage,
+						cmdGutter,
+						maxWidth,
+						subIndent,
+						opts.GutterGap,
+						opts.MinDescWidth,
+					)
 				}
 			}
 		} else {
 			for _, c := range commands {
 				names := strings.Join(c.Names(), ", ")
-				printPaddedEntry(w, names, c.Usage, cmdGutter, maxWidth, prefixGap, opts.MinDescWidth)
+				printPaddedEntry(
+					w,
+					names,
+					c.Usage,
+					cmdGutter,
+					maxWidth,
+					prefixGap,
+					opts.MinDescWidth,
+				)
 			}
 		}
 
@@ -340,7 +399,9 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 	// 5. Flags section
 	if len(localFlags) > 0 {
 		flagCategories := cmd.VisibleFlagCategories()
+
 		var namedFlagCats []cli.VisibleFlagCategory
+
 		for _, fc := range flagCategories {
 			if fc.Name() != "" && len(fc.Flags()) > 0 {
 				namedFlagCats = append(namedFlagCats, fc)
@@ -349,6 +410,7 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 
 		if len(namedFlagCats) > 0 {
 			categorizedFlagSet := make(map[cli.Flag]bool)
+
 			for _, fc := range namedFlagCats {
 				for _, fl := range fc.Flags() {
 					categorizedFlagSet[fl] = true
@@ -356,10 +418,12 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 			}
 
 			var uncategorizedFlags []flagItem
+
 			for _, fl := range cmd.VisibleFlags() {
 				if !categorizedFlagSet[fl] {
 					names := fl.Names()
 					isPersistent := false
+
 					if !isRoot {
 						for _, n := range names {
 							if persistentNames[n] {
@@ -368,8 +432,12 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 							}
 						}
 					}
+
 					if !isPersistent {
-						uncategorizedFlags = append(uncategorizedFlags, formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar))
+						uncategorizedFlags = append(
+							uncategorizedFlags,
+							formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar),
+						)
 					}
 				}
 			}
@@ -377,15 +445,25 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 			if len(uncategorizedFlags) > 0 {
 				_, _ = fmt.Fprintln(w, "Flags:")
 				for _, fl := range uncategorizedFlags {
-					printPaddedEntry(w, fl.label, fl.desc, gutter, maxWidth, prefixGap, opts.MinDescWidth)
+					printPaddedEntry(
+						w,
+						fl.label,
+						fl.desc,
+						gutter,
+						maxWidth,
+						prefixGap,
+						opts.MinDescWidth,
+					)
 				}
 			}
 
 			for _, fc := range namedFlagCats {
 				var catFlags []flagItem
+
 				for _, fl := range fc.Flags() {
 					names := fl.Names()
 					isPersistent := false
+
 					if !isRoot {
 						for _, n := range names {
 							if persistentNames[n] {
@@ -394,26 +472,49 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 							}
 						}
 					}
+
 					if !isPersistent {
-						catFlags = append(catFlags, formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar))
+						catFlags = append(
+							catFlags,
+							formatFlagItem(fl, opts.PathPrefixFilter, opts.CustomMetavar),
+						)
 					}
 				}
+
 				if len(catFlags) > 0 {
 					if len(uncategorizedFlags) > 0 || fc != namedFlagCats[0] {
 						_, _ = fmt.Fprintln(w)
 					}
+
 					_, _ = fmt.Fprintf(w, "%s:\n", fc.Name())
 					for _, fl := range catFlags {
-						printPaddedEntry(w, fl.label, fl.desc, gutter, maxWidth, prefixGap, opts.MinDescWidth)
+						printPaddedEntry(
+							w,
+							fl.label,
+							fl.desc,
+							gutter,
+							maxWidth,
+							prefixGap,
+							opts.MinDescWidth,
+						)
 					}
 				}
 			}
 		} else {
 			_, _ = fmt.Fprintln(w, "Flags:")
 			for _, fl := range localFlags {
-				printPaddedEntry(w, fl.label, fl.desc, gutter, maxWidth, prefixGap, opts.MinDescWidth)
+				printPaddedEntry(
+					w,
+					fl.label,
+					fl.desc,
+					gutter,
+					maxWidth,
+					prefixGap,
+					opts.MinDescWidth,
+				)
 			}
 		}
+
 		_, _ = fmt.Fprintln(w)
 	}
 
@@ -423,16 +524,22 @@ func PrintHelp(w io.Writer, cmd *cli.Command, opts Options) {
 		if isRoot {
 			header = "Flags:"
 		}
+
 		_, _ = fmt.Fprintln(w, header)
 		for _, fl := range globalFlags {
 			printPaddedEntry(w, fl.label, fl.desc, gutter, maxWidth, prefixGap, opts.MinDescWidth)
 		}
+
 		_, _ = fmt.Fprintln(w)
 	}
 
 	// 7. Footer for commands with subcommands
 	if len(commands) > 0 {
-		_, _ = fmt.Fprintf(w, "Use %q for more information about a command.\n", cmd.FullName()+" [command] --help")
+		_, _ = fmt.Fprintf(
+			w,
+			"Use %q for more information about a command.\n",
+			cmd.FullName()+" [command] --help",
+		)
 	}
 
 	// 8. Authors (clean & compact)
@@ -461,13 +568,17 @@ func calculateMaxWidth(w io.Writer, opts Options) int {
 		if opts.MinWidth > 0 && width < opts.MinWidth {
 			width = opts.MinWidth
 		}
+
 		if opts.MaxWidth > 0 && width > opts.MaxWidth {
 			width = opts.MaxWidth
 		}
+
 		return width
 	}
+
 	if opts.MaxWidth > 0 && opts.DefaultWidth > opts.MaxWidth {
 		return opts.MaxWidth
 	}
+
 	return opts.DefaultWidth
 }
