@@ -19,7 +19,7 @@ formatters:
       local-prefixes:
         - github.com/zigai/urfave-help
   exclusions:
-    paths:
+    paths: []
 
 linters:
   enable:
