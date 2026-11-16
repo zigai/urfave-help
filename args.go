@@ -53,7 +53,10 @@ func getArgs(cmd *cli.Command) []Arg {
 			switch val := v.(type) {
 			case []Arg:
 				return val
-			case []struct{ Name, Desc string }:
+			case []struct {
+				Name string
+				Desc string
+			}:
 				res := make([]Arg, len(val))
 				for i, a := range val {
 					res[i] = Arg{Name: a.Name, Desc: a.Desc}
